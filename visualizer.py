@@ -20,7 +20,8 @@ class EmbeddingVisualizer:
         collection_name: str,
         max_points: int = 2000,
         random_seed: int = 42,
-        n_clusters: int = 10
+        n_clusters: int = 10,
+        outlier_threshold: float = 3.0
     ):
         """Initialize the visualizer with database path and visualization parameters.
         
@@ -31,15 +32,17 @@ class EmbeddingVisualizer:
             max_points: Maximum number of points to visualize (for performance)
             random_seed: Random seed for reproducibility
             n_clusters: Number of clusters to create for coloring points
+            outlier_threshold: Z-score threshold for outlier removal (higher = more outliers kept)
         """
         self.db_directory = db_directory
         self.collection_name = collection_name
         # Update output directory to artifacts/visualizations
         visualization_dir = "artifacts/visualizations"
-        self.output_file = f"{visualization_dir}/visualization_{collection_name}.html"
+        self.output_file = f"{visualization_dir}/visualization_{collection_name}_{random_seed}_{max_points}_{n_clusters}_{outlier_threshold}.html"
         self.max_points = max_points
         self.random_seed = random_seed
         self.n_clusters = n_clusters
+        self.outlier_threshold = outlier_threshold
         
         # Set random seed for reproducibility
         random.seed(self.random_seed)
@@ -106,6 +109,56 @@ class EmbeddingVisualizer:
         kmeans = KMeans(n_clusters=self.n_clusters, random_state=self.random_seed)
         clusters = kmeans.fit_predict(embeddings)
         return clusters
+    
+    def filter_outliers(self, embeddings_2d, embeddings_3d, documents, metadatas, ids, clusters):
+        """Filter out outlier points that are too far from the main clusters.
+        
+        Uses z-score to identify points that are too far from the center in both 2D and 3D spaces.
+        Returns filtered versions of all inputs.
+        """
+        print(f"Filtering outliers with threshold {self.outlier_threshold}...")
+        
+        # Calculate z-scores for 3D embeddings along each axis
+        z_scores_3d = np.zeros_like(embeddings_3d)
+        for dim in range(3):
+            mean = np.mean(embeddings_3d[:, dim])
+            std = np.std(embeddings_3d[:, dim])
+            if std > 0:  # Avoid division by zero
+                z_scores_3d[:, dim] = np.abs((embeddings_3d[:, dim] - mean) / std)
+        
+        # A point is an outlier if its z-score exceeds the threshold in any dimension
+        max_z_scores_3d = np.max(z_scores_3d, axis=1)
+        outliers_3d = max_z_scores_3d > self.outlier_threshold
+        
+        # Calculate z-scores for 2D embeddings along each axis
+        z_scores_2d = np.zeros_like(embeddings_2d)
+        for dim in range(2):
+            mean = np.mean(embeddings_2d[:, dim])
+            std = np.std(embeddings_2d[:, dim])
+            if std > 0:  # Avoid division by zero
+                z_scores_2d[:, dim] = np.abs((embeddings_2d[:, dim] - mean) / std)
+        
+        # A point is an outlier if its z-score exceeds the threshold in any dimension
+        max_z_scores_2d = np.max(z_scores_2d, axis=1)
+        outliers_2d = max_z_scores_2d > self.outlier_threshold
+        
+        # Combine both outlier detection methods (a point is kept only if it's not an outlier in either 2D or 3D)
+        outliers = outliers_2d | outliers_3d
+        
+        # Count outliers
+        num_outliers = np.sum(outliers)
+        print(f"Filtered out {num_outliers} outliers ({num_outliers/len(outliers)*100:.1f}% of points)")
+        
+        # Keep only non-outlier points
+        keep_indices = ~outliers
+        embeddings_2d_filtered = embeddings_2d[keep_indices]
+        embeddings_3d_filtered = embeddings_3d[keep_indices]
+        documents_filtered = [doc for i, doc in enumerate(documents) if keep_indices[i]]
+        metadatas_filtered = [meta for i, meta in enumerate(metadatas) if keep_indices[i]]
+        ids_filtered = [id for i, id in enumerate(ids) if keep_indices[i]]
+        clusters_filtered = clusters[keep_indices]
+        
+        return embeddings_2d_filtered, embeddings_3d_filtered, documents_filtered, metadatas_filtered, ids_filtered, clusters_filtered
     
     def create_visualization(self, embeddings_2d, embeddings_3d, documents, metadatas, ids, clusters, original_dims):
         """Create an interactive visualization with 2D/3D toggle using Plotly."""
@@ -287,6 +340,11 @@ class EmbeddingVisualizer:
         # Cluster embeddings for coloring
         clusters = self.cluster_embeddings(embeddings)
         
+        # Filter outliers
+        embeddings_2d, embeddings_3d, documents, metadatas, ids, clusters = self.filter_outliers(
+            embeddings_2d, embeddings_3d, documents, metadatas, ids, clusters
+        )
+        
         # Create visualization with 2D/3D toggle and dimensions in title
         fig = self.create_visualization(embeddings_2d, embeddings_3d, documents, metadatas, ids, clusters, original_dims)
         
@@ -307,6 +365,8 @@ if __name__ == "__main__":
                         help="Random seed for reproducibility (default: 42)")
     parser.add_argument("--clusters", "-k", type=int, default=10,
                         help="Number of clusters for coloring (default: 10)")
+    parser.add_argument("--outlier-threshold", "-o", type=float, default=3.0,
+                        help="Z-score threshold for outlier removal; lower values remove more outliers (default: 3.0)")
     
     args = parser.parse_args()
     
@@ -315,6 +375,7 @@ if __name__ == "__main__":
         collection_name=args.collection,
         max_points=args.max_points,
         random_seed=args.seed,
-        n_clusters=args.clusters
+        n_clusters=args.clusters,
+        outlier_threshold=args.outlier_threshold
     )
     visualizer.run()
