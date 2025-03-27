@@ -10,7 +10,7 @@ A complete pipeline for downloading, processing, and creating vector embeddings 
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/website2embedding.git
+   git clone https://github.com/zivshek/website2embedding.git
    cd website2embedding
    ```
 
