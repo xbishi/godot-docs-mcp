@@ -3,3 +3,4 @@ artifacts/downloaded_sites
 artifacts/chroma_db
 artifacts/visualizations
 artifacts/chunks
+artifacts/collections.txt

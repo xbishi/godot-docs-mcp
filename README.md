@@ -45,6 +45,7 @@ The repository includes pre-curated Godot documentation, so you can quickly try 
    ```bash
    python vectorizer.py --input artifacts/chunks/godotengine_chunks_SZ_400_O_20.jsonl
    ```
+   it will log the collection name to artifacts/collections.txt, so you can copy it for other uses later.
 
 3. Visualize the embeddings:
    ```bash
