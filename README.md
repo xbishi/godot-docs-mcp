@@ -115,7 +115,7 @@ Options:
 Clean HTML and convert to markdown format:
 
 ```bash
-python curator.py --input artifacts/downloaded_sites --output artifacts/curated/site_domain
+python curator.py --input artifacts/downloaded_sites/site_domain
 ```
 
 Options:
@@ -139,7 +139,7 @@ Options:
 Generate embeddings and store in ChromaDB:
 
 ```bash
-python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db artifacts/chroma_db
+python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db artifacts/vector_stores/chroma_db
 ```
 
 Options:
