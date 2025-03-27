@@ -57,7 +57,7 @@ Options:
 Clean HTML and convert to markdown format:
 
 ```bash
-python page_curator.py --input artifacts/downloaded_sites
+python page_curator.py --input artifacts/downloaded_sites/site_domain
 ```
 
 Options:
@@ -68,7 +68,7 @@ Options:
 Split markdown files into manageable chunks:
 
 ```bash
-python chunker.py --input artifacts/curated --chunk-size 400 --chunk-overlap 20
+python chunker.py --input artifacts/curated/site_domain --chunk-size 400 --chunk-overlap 20
 ```
 
 Options:
@@ -81,7 +81,7 @@ Options:
 Generate embeddings and store in ChromaDB:
 
 ```bash
-python vectorizer.py --input artifacts/chunks/chunks.jsonl --db artifacts/chroma_db
+python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db artifacts/chroma_db
 ```
 
 Options:
