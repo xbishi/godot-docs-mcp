@@ -4,6 +4,64 @@ A complete pipeline for downloading, processing, and creating vector embeddings 
 
 > **Note:** The curated Godot website is included in the repository (`artifacts/curated/godotengine`) as it takes a long time to download and process. You can start directly with the text chunking step if you want to work with the Godot documentation.
 
+![Visualization Screenshot](assets/visualization_screenshot.png)
+
+## Installation
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/yourusername/website2embedding.git
+   cd website2embedding
+   ```
+
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+
+   # Linux/MacOS
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Getting Started
+
+The repository includes pre-curated Godot documentation, so you can quickly try out the pipeline:
+
+### Quick Start with Existing Data
+
+1. Generate text chunks from the curated Godot documentation:
+   ```bash
+   python chunker.py --input artifacts/curated/godotengine --chunk-size 400 --chunk-overlap 20
+   ```
+
+2. Create vector embeddings:
+   ```bash
+   python vectorizer.py --input artifacts/chunks/godotengine_chunks_SZ_400_O_20.jsonl
+   ```
+
+3. Visualize the embeddings:
+   ```bash
+   python visualizer.py --collection godotengine_chunks_SZ_400_O_20_sentence-transformers_all-MiniLM-L6-v2
+   ```
+
+### Full Pipeline with New Content
+
+To process new web content from scratch:
+
+1. Add URLs to `websites_to_download.txt`, then download the content:
+   ```bash
+   python downloader.py
+   ```
+
+2. Follow steps 2-5 in the Workflow section below.
+
 ## Overview
 
 This project provides a comprehensive workflow for:
@@ -17,13 +75,13 @@ This project provides a comprehensive workflow for:
 ## Prerequisites
 
 - Python 3.8+
-- Required Python packages are listed in the individual scripts (consider creating a requirements.txt)
+- Required Python packages (installed via requirements.txt)
 - Sufficient disk space for downloaded content and vector database
 
 ## Project Structure
 
 ```
-godot-embedding/
+website2embedding/
 ├── downloader.py       # Downloads web content
 ├── page_curator.py     # Cleans HTML and converts to markdown
 ├── chunker.py          # Splits text into chunks
@@ -45,11 +103,10 @@ godot-embedding/
 Downloads HTML content from websites listed in `websites_to_download.txt`:
 
 ```bash
-python downloader.py --url_list websites_to_download.txt --delay 1.0
+python downloader.py --delay 1.0
 ```
 
 Options:
-- `--url_list` / `-f`: Path to file containing URLs (default: websites_to_download.txt)
 - `--delay` / `-d`: Delay between requests in seconds (default: 1.0)
 
 ### 2. Curate Content
@@ -57,7 +114,7 @@ Options:
 Clean HTML and convert to markdown format:
 
 ```bash
-python page_curator.py --input artifacts/downloaded_sites/site_domain
+python curator.py --input artifacts/downloaded_sites --output artifacts/curated/site_domain
 ```
 
 Options:

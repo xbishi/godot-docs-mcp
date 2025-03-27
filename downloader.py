@@ -154,7 +154,6 @@ class WebsiteDownloader:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download pages from specified URLs and their subdirectories.")
-    parser.add_argument("--url_list", "-f", default="websites_to_download.txt", help="File containing list of URLs to download")
     parser.add_argument("--delay", "-d", type=float, default=1.0,
                         help="Delay between requests in seconds (default: 1.0)")
     
@@ -164,4 +163,4 @@ if __name__ == "__main__":
         delay=args.delay
     )
     
-    downloader.process_url_list(args.url_list)
+    downloader.process_url_list("websites_to_download.txt")
