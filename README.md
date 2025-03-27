@@ -1,4 +1,4 @@
-# godot-embedding
+# website2embeddings
 
 A complete pipeline for downloading, processing, and creating vector embeddings from the Godot documentation. This project allows you to create searchable semantic embeddings from web content and visualize them in 2D/3D space.
 
