@@ -1,6 +1,5 @@
 artifacts/downloaded_sites
 *.jsonl
-artifacts/chroma_db
 artifacts/visualizations
 artifacts/chunks
-artifacts/collections.txt
+artifacts/vector_stores

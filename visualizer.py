@@ -297,7 +297,7 @@ class EmbeddingVisualizer:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize embeddings from ChromaDB in 2D or 3D space.")
-    parser.add_argument("--db", "-d", default="artifacts/chroma_db",
+    parser.add_argument("--db", "-d", default="artifacts/vector_stores/chroma_db",
                         help="Directory of the ChromaDB database (default: artifacts/chroma_db)")
     parser.add_argument("--collection", "-c", default="godot_docs",
                         help="Name of the collection in ChromaDB (default: godot_docs)")

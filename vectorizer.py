@@ -9,8 +9,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
 
-model = "sentence-transformers/all-MiniLM-L6-v2"  # Default model for embeddings
-# model = "dunzhang/stella_en_400M_v5"
+# "dunzhang/stella_en_400M_v5"
 
 class ChunkVectorizer:
     """Generate embeddings from text chunks and store them in a ChromaDB vector database."""
@@ -36,7 +35,7 @@ class ChunkVectorizer:
         self.collection_name = f"{collection_base_name}_{model_name.replace('/', '_')}"
         print(f"Collection name: {self.collection_name}")
         # Append the collection name to artifacts/collections.txt
-        collections_file = "artifacts/collections.txt"
+        collections_file = "artifacts/vecotr_stores/collections.txt"
         os.makedirs(os.path.dirname(collections_file), exist_ok=True)
         with open(collections_file, 'a+', encoding='utf-8') as f:
             f.seek(0)  # Move to the beginning of the file
@@ -144,7 +143,7 @@ class CustomEmbeddingFunction:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate embeddings from text chunks and store them in ChromaDB.")
     parser.add_argument("--input", "-i", help="Input JSONL file containing text chunks")
-    parser.add_argument("--db", "-d", default="artifacts/chroma_db",
+    parser.add_argument("--db", "-d", default="artifacts/vector_stores/chroma_db",
                         help="Directory where ChromaDB will store the vector database (default: artifacts/chroma_db)")
     parser.add_argument("--model", "-m", default="sentence-transformers/all-MiniLM-L6-v2", 
                         help="Name of the sentence-transformer model to use (default: sentence-transformers/all-MiniLM-L6-v2)")
