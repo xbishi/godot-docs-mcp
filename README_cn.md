@@ -7,7 +7,6 @@
 > **注意：** 已处理的Godot网站已包含在仓库中（`artifacts/curated/godotengine`），因为下载和处理需要较长时间。如果您想使用Godot文档，可以直接从文本分块步骤开始。
 
 ![可视化截图](assets/visualization_screenshot.png)
-[可视化交互](assets/visualization_example.html)
 
 ## 安装
 

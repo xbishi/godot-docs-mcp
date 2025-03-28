@@ -7,7 +7,6 @@ A complete pipeline for downloading, processing, and creating vector embeddings 
 > **Note:** The curated Godot website is included in the repository (`artifacts/curated/godotengine`) as it takes a long time to download and process. You can start directly with the text chunking step if you want to work with the Godot documentation.
 
 ![Visualization Screenshot](assets/visualization_screenshot.png)
-[Interactive Visualization](assets/visualization_example.html)
 
 ## Installation
 
