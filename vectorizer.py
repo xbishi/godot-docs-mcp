@@ -34,14 +34,6 @@ class ChunkVectorizer:
         collection_base_name = os.path.basename(input_file).replace('.jsonl', '')
         self.collection_name = f"{collection_base_name}_{model_name.replace('/', '_')}"
         print(f"Collection name: {self.collection_name}")
-        # Append the collection name to artifacts/collections.txt
-        collections_file = "artifacts/vecotr_stores/collections.txt"
-        os.makedirs(os.path.dirname(collections_file), exist_ok=True)
-        with open(collections_file, 'a+', encoding='utf-8') as f:
-            f.seek(0)  # Move to the beginning of the file
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"{self.collection_name} ({timestamp})\n")
-        self.batch_size = batch_size
         
         # Initialize the ChromaDB client
         print(f"Initializing ChromaDB at {db_directory}")
@@ -64,6 +56,15 @@ class ChunkVectorizer:
             metadata={"hnsw:space": "cosine"}  # Using cosine similarity for semantic search
         )
         print(f"Created new collection: {self.collection_name}")
+        
+        # Append the collection name to artifacts/collections.txt
+        collections_file = "artifacts/vector_stores/collections.txt"
+        os.makedirs(os.path.dirname(collections_file), exist_ok=True)
+        with open(collections_file, 'a+', encoding='utf-8') as f:
+            f.seek(0)  # Move to the beginning of the file
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"{self.collection_name} ({timestamp})\n")
+        self.batch_size = batch_size
         
         # Load the embedding model
         print(f"Using model: {model_name}")
