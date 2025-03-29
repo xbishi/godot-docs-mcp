@@ -16,18 +16,7 @@
    cd website2embedding
    ```
 
-2. 创建并激活虚拟环境（推荐）：
-   ```bash
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-
-   # Linux/MacOS
-   python -m venv venv
-   source venv/bin/activate
-   ```
-
-3. 安装依赖：
+2. 安装依赖：
    ```bash
    pip install -r requirements.txt
    ```
@@ -121,7 +110,7 @@ python curator.py --input artifacts/downloaded_sites/site_domain
 ```
 
 选项：
-- `--input` / `-i`: 包含下载HTML的输入目录（默认：artifacts/downloaded_sites）
+- `--input` / `-i`: 包含下载HTML的输入目录
 
 ### 3. 创建文本块
 
@@ -146,9 +135,11 @@ python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db arti
 
 选项：
 - `--input` / `-i`: 包含文本块的JSONL文件
-- `--db` / `-d`: ChromaDB向量数据库目录（默认：artifacts/chroma_db）
+- `--db` / `-d`: ChromaDB向量数据库目录（默认：artifacts/vector_stores/chroma_db）
 - `--model` / `-m`: sentence-transformer模型名称（默认：sentence-transformers/all-MiniLM-L6-v2）
 - `--batch-size` / `-b`: 嵌入生成的批处理大小（默认：32）
+
+> **注意:** **集合**名会被写入 artifacts/vector_stores/collections.txt 以备日后使用。
 
 ### 5. 可视化嵌入
 
@@ -159,19 +150,11 @@ python visualizer.py --collection chunks_SZ_400_O_20_sentence-transformers_all-M
 ```
 
 选项：
-- `--db` / `-d`: ChromaDB数据库目录（默认：artifacts/chroma_db）
-- `--collection` / `-c`: ChromaDB中的集合名称（默认：godot_docs）
+- `--db` / `-d`: ChromaDB数据库目录（默认：artifacts/vector_stores/chroma_db）
+- `--collection` / `-c`: ChromaDB中的集合名称
 - `--max-points` / `-m`: 要可视化的最大点数（默认：2000）
 - `--seed` / `-s`: 用于可重现性的随机种子（默认：42）
 - `--clusters` / `-k`: 用于着色的集群数量（默认：10）
-
-## 可视化功能
-
-可视化包括：
-- 交互式2D/3D切换
-- 语义分组的集群着色
-- 悬停查看详细文档信息
-- 动态调整大小和探索
 
 ## 示例用例
 

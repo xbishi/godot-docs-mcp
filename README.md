@@ -16,18 +16,7 @@ A complete pipeline for downloading, processing, and creating vector embeddings 
    cd website2embedding
    ```
 
-2. Create and activate a virtual environment (recommended):
-   ```bash
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-
-   # Linux/MacOS
-   python -m venv venv
-   source venv/bin/activate
-   ```
-
-3. Install dependencies:
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -121,7 +110,7 @@ python curator.py --input artifacts/downloaded_sites/site_domain
 ```
 
 Options:
-- `--input` / `-i`: Input directory with downloaded HTML (default: artifacts/downloaded_sites)
+- `--input` / `-i`: Input directory with downloaded HTML
 
 ### 3. Create Text Chunks
 
@@ -146,9 +135,11 @@ python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db arti
 
 Options:
 - `--input` / `-i`: Input JSONL file containing text chunks
-- `--db` / `-d`: Directory for ChromaDB vector database (default: artifacts/chroma_db)
+- `--db` / `-d`: Directory for ChromaDB vector database (default: artifacts/vector_stores/chroma_db)
 - `--model` / `-m`: Name of the sentence-transformer model (default: sentence-transformers/all-MiniLM-L6-v2)
 - `--batch-size` / `-b`: Batch size for embedding generation (default: 32)
+
+> **Note:** The **collection** name will be logged to artifacts/vector_stores/collections.txt for later usages.
 
 ### 5. Visualize Embeddings
 
@@ -159,19 +150,11 @@ python visualizer.py --collection chunks_SZ_400_O_20_sentence-transformers_all-M
 ```
 
 Options:
-- `--db` / `-d`: ChromaDB database directory (default: artifacts/chroma_db)
-- `--collection` / `-c`: Name of the collection in ChromaDB (default: godot_docs)
+- `--db` / `-d`: ChromaDB database directory (default: artifacts/vector_stores/chroma_db)
+- `--collection` / `-c`: Name of the collection in ChromaDB
 - `--max-points` / `-m`: Maximum points to visualize (default: 2000)
 - `--seed` / `-s`: Random seed for reproducibility (default: 42)
 - `--clusters` / `-k`: Number of clusters for coloring (default: 10)
-
-## Visualization Features
-
-The visualizations include:
-- Interactive 2D/3D toggle
-- Cluster coloring for semantic grouping
-- Hover for detailed document information
-- Dynamic resizing and exploration
 
 ## Example Use Case
 
