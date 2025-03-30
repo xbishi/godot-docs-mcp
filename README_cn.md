@@ -1,4 +1,4 @@
-# website2embeddings
+# web2embeddings
 
 [English](README.md)
 
