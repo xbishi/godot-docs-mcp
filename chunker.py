@@ -19,7 +19,13 @@ class TextChunker:
     ):
         """Initialize with input/output paths and chunking parameters."""
         self.input_dir = input_dir
+        
+        # Get the base domain name from directory
         base_domain = os.path.basename(input_dir)
+        # Ensure consistent domain naming even if passed through different pipeline stages
+        if '.' in base_domain:
+            base_domain = base_domain.replace('.', '-')
+            
         self.output_file = f"artifacts/chunks/{base_domain}_chunks_SZ_{chunk_size}_O_{chunk_overlap}.jsonl"
         
         # Initialize LangChain's RecursiveCharacterTextSplitter

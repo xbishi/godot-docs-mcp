@@ -80,6 +80,11 @@ class WebsiteDownloader:
         
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
+            
+            # Skip anchor links (links with # that point to sections within the same page)
+            if '#' in href:
+                continue
+                
             full_url = urljoin(base_url, href)
             
             parsed_url = urlparse(full_url)
@@ -104,8 +109,12 @@ class WebsiteDownloader:
             # Parse the URL to determine the scope
             parsed_url = urlparse(start_url)
             path = parsed_url.path
+            
+            # Sanitize the domain name by replacing dots with hyphens
+            domain_folder = parsed_url.netloc.replace('.', '-')
+            
             # Current output directory for the current URL
-            self.output_dir = "/artifacts/downloaded_sites/" + parsed_url.netloc
+            self.output_dir = "artifacts/downloaded_sites/" + domain_folder
             # Create output directory if it doesn't exist
             os.makedirs(self.output_dir, exist_ok=True)
             
