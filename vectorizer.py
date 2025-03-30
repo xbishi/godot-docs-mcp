@@ -32,8 +32,18 @@ class ChunkVectorizer:
         self.input_file = input_file
         self.db_directory = db_directory
         collection_base_name = os.path.basename(input_file).replace('.jsonl', '')
-        self.collection_name = f"{collection_base_name}_{model_name.replace('/', '_')}"
-        print(f"Collection name: {self.collection_name}")
+        
+        # Create collection name and limit to 63 characters (database limitation)
+        # Extract model name short version (e.g., "all-MiniLM-L6-v2" from full path)
+        model_short_name = model_name.split('/')[-1] if '/' in model_name else model_name
+        collection_name = f"{collection_base_name}_{model_short_name}"
+        
+        # Truncate if longer than 63 chars
+        if len(collection_name) > 63:
+            collection_name = collection_name[:63]
+        
+        self.collection_name = collection_name
+        print(f"Collection name: {self.collection_name} ({len(self.collection_name)} chars)")
         
         # Initialize the ChromaDB client
         print(f"Initializing ChromaDB at {db_directory}")
@@ -63,7 +73,7 @@ class ChunkVectorizer:
         with open(collections_file, 'a+', encoding='utf-8') as f:
             f.seek(0)  # Move to the beginning of the file
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"{self.collection_name} ({timestamp})\n")
+            f.write(f"{self.collection_name} ({timestamp}) - Original model: {model_name}\n")
         self.batch_size = batch_size
         
         # Load the embedding model
@@ -145,7 +155,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate embeddings from text chunks and store them in ChromaDB.")
     parser.add_argument("--input", "-i", help="Input JSONL file containing text chunks")
     parser.add_argument("--db", "-d", default="artifacts/vector_stores/chroma_db",
-                        help="Directory where ChromaDB will store the vector database (default: artifacts/chroma_db)")
+                        help="Directory where ChromaDB will store the vector database (default: artifacts/vector_stores/chroma_db)")
     parser.add_argument("--model", "-m", default="sentence-transformers/all-MiniLM-L6-v2", 
                         help="Name of the sentence-transformer model to use (default: sentence-transformers/all-MiniLM-L6-v2)")
     parser.add_argument("--batch-size", "-b", type=int, default=32,

@@ -3,3 +3,4 @@ artifacts/downloaded_sites
 artifacts/visualizations
 artifacts/chunks
 artifacts/vector_stores
+artifacts/curated

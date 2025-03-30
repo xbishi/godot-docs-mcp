@@ -11,6 +11,23 @@ class PageCurator:
         self.input_dir = input_dir
         self.output_dir = os.path.join("artifacts", "curated")
         
+        # Extract the domain name to preserve folder structure
+        if os.path.basename(os.path.dirname(input_dir)) == "downloaded_sites":
+            # If input is directly a domain folder under downloaded_sites
+            self.domain = os.path.basename(input_dir)
+        else:
+            # In case input path is deeper (e.g., downloaded_sites/domain/en/stable)
+            # Extract the first folder after downloaded_sites
+            parts = input_dir.split(os.sep)
+            if "downloaded_sites" in parts:
+                idx = parts.index("downloaded_sites")
+                if idx + 1 < len(parts):
+                    self.domain = parts[idx + 1]
+                else:
+                    self.domain = None
+            else:
+                self.domain = None
+        
     def clean_html(self, html_content):
         """Clean the HTML content by removing scripts, styles, and unnecessary navigation elements."""
         # Clean non-UTF8 and special characters first
@@ -157,7 +174,12 @@ class PageCurator:
             
             # Determine the output path
             rel_path = os.path.relpath(filepath, self.input_dir)
-            output_path = os.path.join(self.output_dir, rel_path)
+            
+            # If we have a domain, include it in the output path
+            if self.domain:
+                output_path = os.path.join(self.output_dir, self.domain, rel_path)
+            else:
+                output_path = os.path.join(self.output_dir, rel_path)
             
             # Change file extension to .md
             output_path = os.path.splitext(output_path)[0] + '.md'
@@ -200,8 +222,8 @@ class PageCurator:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Clean up downloaded web pages for embedding.")
-    parser.add_argument("--input", "-i", default="artifacts/downloaded_sites", 
-                        help="Input directory containing downloaded website (default: artifacts/downloaded_sites)")
+    parser.add_argument("--input", "-i", 
+                        help="Input directory containing downloaded website")
    
     args = parser.parse_args()
     
