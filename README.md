@@ -1,4 +1,4 @@
-# website2embeddings
+# web2embeddings
 
 [中文](README_cn.md)
 
