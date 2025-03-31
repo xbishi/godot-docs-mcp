@@ -1,5 +1,8 @@
 # web2embeddings
 
+[YouTube](https://youtu.be/mH1aTzKLGQM)
+[B站](https://www.bilibili.com/video/BV1Z2ZEYiE4s)
+
 [中文](README_cn.md)
 
 A complete pipeline for downloading, processing, and creating vector embeddings from documentation. This project allows you to create searchable semantic embeddings from web content and visualize them in 2D/3D space.
