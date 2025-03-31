@@ -12,8 +12,8 @@
 
 1. 克隆此仓库：
    ```bash
-   git clone https://github.com/zivshek/website2embedding.git
-   cd website2embedding
+   git clone https://github.com/zivshek/web2embedding.git
+   cd web2embedding
    ```
 
 2. 安装依赖：
