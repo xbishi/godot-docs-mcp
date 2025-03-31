@@ -1,6 +1,8 @@
 # web2embeddings
 
-[English](README.md)
+[YouTube视频](https://youtu.be/mH1aTzKLGQM)
+
+[B站视频](https://www.bilibili.com/video/BV1Z2ZEYiE4s)
 
 一个完整的流程，用于下载、处理和从文档创建向量嵌入。该项目允许您从网页内容创建可搜索的语义嵌入，并在2D/3D空间中可视化。
 
