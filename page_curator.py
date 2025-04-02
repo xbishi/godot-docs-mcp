@@ -7,17 +7,21 @@ from bs4 import BeautifulSoup
 
 class PageCurator:
     def __init__(self, input_dir):
-        """Initialize the curator with input and output directories."""
+        """
+        初始化页面清理器
+        Args:
+            input_dir: 输入目录路径，包含要处理的HTML文件
+        """
         self.input_dir = input_dir
         self.output_dir = os.path.join("artifacts", "curated")
         
-        # Extract the domain name to preserve folder structure
+        # 提取域名以保持文件夹结构
         if os.path.basename(os.path.dirname(input_dir)) == "downloaded_sites":
-            # If input is directly a domain folder under downloaded_sites
+            # 如果输入是downloaded_sites下的直接域名文件夹
             self.domain = os.path.basename(input_dir)
         else:
-            # In case input path is deeper (e.g., downloaded_sites/domain/en/stable)
-            # Extract the first folder after downloaded_sites
+            # 如果输入路径更深（例如downloaded_sites/domain/en/stable）
+            # 提取downloaded_sites后的第一个文件夹
             parts = input_dir.split(os.sep)
             if "downloaded_sites" in parts:
                 idx = parts.index("downloaded_sites")
@@ -29,78 +33,84 @@ class PageCurator:
                 self.domain = None
         
     def clean_html(self, html_content):
-        """Clean the HTML content by removing scripts, styles, and unnecessary navigation elements."""
-        # Clean non-UTF8 and special characters first
+        """
+        清理HTML内容，移除脚本、样式和不必要的导航元素
+        Args:
+            html_content: 要清理的HTML内容
+        Returns:
+            清理后的HTML内容
+        """
+        # 首先清理非UTF8和特殊字符
         html_content = re.sub(r'[^\x00-\x7F]+', '', html_content) 
         
         soup = BeautifulSoup(html_content, 'html.parser')
 
-        # Remove script and style tags
+        # 移除脚本和样式标签
         for tag in soup(['script', 'style', 'iframe', 'noscript']):
             tag.decompose()
         
-        # Remove navigation elements, search boxes, etc.
+        # 移除导航元素、搜索框等
         selectors_to_remove = [
-            'nav',                     # Navigation menus
-            '.nav',                    # Navigation classes
+            'nav',                     # 导航菜单
+            '.nav',                    # 导航类
             '.navigation',
             '.navbar',
             '.sidebar',
             '.menu',
-            '.header',                 # Headers often contain navigation
-            '.footer',                 # Footers often contain irrelevant links
-            '.search',                 # Search forms
-            '.pagination',             # Next/prev links
-            '[role="search"]',         # Elements with search role
-            '[role="navigation"]',     # Elements with navigation role
-            '.wy-nav-side',           # ReadTheDocs specific
+            '.header',                 # 页眉通常包含导航
+            '.footer',                 # 页脚通常包含无关链接
+            '.search',                 # 搜索表单
+            '.pagination',             # 下一页/上一页链接
+            '[role="search"]',         # 搜索角色元素
+            '[role="navigation"]',     # 导航角色元素
+            '.wy-nav-side',           # ReadTheDocs特定
             '.wy-side-scroll',
             '.wy-side-nav-search',
             '.wy-menu',
             '.rst-versions',
             '.wy-nav-top',
-            '.toc',                    # Table of contents (often in sidebar)
-            '.breadcrumb',            # Breadcrumbs navigation
-            '.toctree',               # Documentation table of contents
-            '.toctree-l1',           # Documentation TOC levels
+            '.toc',                    # 目录（通常在侧边栏）
+            '.breadcrumb',            # 面包屑导航
+            '.toctree',               # 文档目录
+            '.toctree-l1',           # 文档目录级别
             '.toctree-l2',
             '.toctree-l3',
             '.toctree-l4',
-            '.contents',              # Alternative name for table of contents
-            '#table-of-contents',     # Common TOC id
-            '[role="contentinfo"]'    # Often contains TOC or navigation
+            '.contents',              # 目录的替代名称
+            '#table-of-contents',     # 常见目录ID
+            '[role="contentinfo"]'    # 通常包含目录或导航
         ]
         
         for selector in selectors_to_remove:
             for element in soup.select(selector):
                 element.decompose()
         
-        # Remove links that are likely navigation or external
+        # 移除可能是导航或外部的链接
         for a_tag in soup.find_all('a'):
             href = a_tag.get('href', '')
             
-            # Check if link is likely to be navigation or external
+            # 检查链接是否可能是导航或外部链接
             is_nav_link = False
             nav_patterns = ['search', 'next', 'prev', 'previous', 'index', 'home', 'contact', 'about']
             
-            # Check text content of the link
+            # 检查链接的文本内容
             if a_tag.text and any(pattern in a_tag.text.lower() for pattern in nav_patterns):
                 is_nav_link = True
             
-            # Check href attribute
+            # 检查href属性
             if href and (href.startswith('http') or any(pattern in href.lower() for pattern in nav_patterns)):
                 is_nav_link = True
             
-            # Replace navigation links with just their text content
+            # 用文本内容替换导航链接
             if is_nav_link:
                 a_tag.replace_with(a_tag.text)
         
-        # Remove empty containers
+        # 移除空容器
         for tag in soup.find_all():
             if tag.name != 'br' and tag.name != 'img' and not tag.text.strip() and not tag.contents:
                 tag.decompose()
                 
-        # Get the main content - focus on main, article, or content sections if available
+        # 获取主要内容 - 优先使用main、article或content部分
         main_content = None
         for selector in ['main', 'article', '#content', '.content', '.main-content', '.document', '.section']:
             content_section = soup.select_one(selector)
@@ -108,19 +118,25 @@ class PageCurator:
                 main_content = content_section
                 break
         
-        # If we found a main content area, use it; otherwise use the whole body
+        # 如果找到主要内容区域，使用它；否则使用整个body
         if main_content:
             cleaned_html = str(main_content)
         else:
-            # If no clear main content, use the body or just everything if body is not found
+            # 如果没有明确的主要内容，使用body或整个内容（如果找不到body）
             body = soup.body or soup
             cleaned_html = str(body)
             
         return cleaned_html
     
     def html_to_markdown(self, html_content):
-        """Convert cleaned HTML content to Markdown format."""
-        # Convert HTML to Markdown using html2text
+        """
+        将清理后的HTML内容转换为Markdown格式
+        Args:
+            html_content: 要转换的HTML内容
+        Returns:
+            转换后的Markdown内容
+        """
+        # 使用html2text将HTML转换为Markdown
         try:
             import html2text
             h = html2text.HTML2Text()
@@ -131,22 +147,22 @@ class PageCurator:
             markdown_content = h.handle(html_content)
             return markdown_content
         except ImportError:
-            # Fallback to using BeautifulSoup for basic text extraction
+            # 如果无法导入html2text，使用BeautifulSoup进行基本文本提取
             soup = BeautifulSoup(html_content, 'html.parser')
             
-            # Extract text with some structure preservation
+            # 提取文本并保留一些结构
             markdown_lines = []
             
-            # Process headings
+            # 处理标题
             for i in range(1, 7):
                 for heading in soup.find_all(f'h{i}'):
                     markdown_lines.append(f"{'#' * i} {heading.text.strip()}\n")
             
-            # Process paragraphs
+            # 处理段落
             for p in soup.find_all('p'):
                 markdown_lines.append(f"{p.text.strip()}\n\n")
             
-            # Process lists
+            # 处理列表
             for ul in soup.find_all('ul'):
                 for li in ul.find_all('li'):
                     markdown_lines.append(f"* {li.text.strip()}\n")
@@ -160,53 +176,59 @@ class PageCurator:
             return ''.join(markdown_lines)
     
     def process_file(self, filepath):
-        """Process a single HTML file."""
+        """
+        处理单个HTML文件
+        Args:
+            filepath: 要处理的文件路径
+        Returns:
+            处理是否成功
+        """
         try:
-            # Read the file
+            # 读取文件
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                 html_content = f.read()
             
-            # Clean the HTML
+            # 清理HTML
             cleaned_html = self.clean_html(html_content)
             
-            # Convert to Markdown
+            # 转换为Markdown
             markdown_content = self.html_to_markdown(cleaned_html)
             
-            # Determine the output path
+            # 确定输出路径
             rel_path = os.path.relpath(filepath, self.input_dir)
             
-            # If we have a domain, include it in the output path
+            # 如果有域名，将其包含在输出路径中
             if self.domain:
                 output_path = os.path.join(self.output_dir, self.domain, rel_path)
             else:
                 output_path = os.path.join(self.output_dir, rel_path)
             
-            # Change file extension to .md
+            # 将文件扩展名改为.md
             output_path = os.path.splitext(output_path)[0] + '.md'
             
-            # Create directory if it doesn't exist
+            # 创建目录（如果不存在）
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             
-            # Write the markdown content
+            # 写入Markdown内容
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(markdown_content)
             
-            print(f"Processed: {filepath} -> {output_path}")
+            print(f"已处理: {filepath} -> {output_path}")
             return True
         except Exception as e:
-            print(f"Error processing {filepath}: {e}")
+            print(f"处理出错 {filepath}: {e}")
             return False
 
     def process_directory(self):
-        """Process all HTML files in the input directory."""
-        # Create output directory if it doesn't exist
+        """处理输入目录中的所有HTML文件"""
+        # 创建输出目录（如果不存在）
         os.makedirs(self.output_dir, exist_ok=True)
         
-        # Count for statistics
+        # 统计计数
         processed_files = 0
         failed_files = 0
         
-        # Walk through the input directory
+        # 遍历输入目录
         for root, dirs, files in os.walk(self.input_dir):
             for file in files:
                 if file.endswith('.html'):
@@ -217,15 +239,17 @@ class PageCurator:
                     else:
                         failed_files += 1
         
-        print(f"\nCuration completed. Processed {processed_files} files. Failed: {failed_files}.")
+        print(f"\n清理完成。已处理 {processed_files} 个文件。失败: {failed_files}。")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Clean up downloaded web pages for embedding.")
+    # 创建命令行参数解析器
+    parser = argparse.ArgumentParser(description="清理下载的网页以进行嵌入。")
     parser.add_argument("--input", "-i", 
-                        help="Input directory containing downloaded website")
+                        help="包含下载网站的输入目录")
    
     args = parser.parse_args()
     
+    # 创建清理器实例并处理目录
     curator = PageCurator(input_dir=args.input)
     curator.process_directory()

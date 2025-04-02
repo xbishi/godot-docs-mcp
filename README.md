@@ -1,171 +1,167 @@
-# web2embeddings
+# Godot 文档 MCP 服务
 
-[中文文档](README_cn.md)
+这是一个基于 ChromaDB 的 Godot 文档检索系统，可以作为 MCP (Multi-Context Provider) 服务集成到各种支持 MCP 的软件中。
 
-A complete pipeline for downloading, processing, and creating vector embeddings from documentation. This project allows you to create searchable semantic embeddings from web content and visualize them in 2D/3D space.
+## 功能特点
 
-> **Note:** The curated Godot website is included in the repository (`artifacts/curated/godotengine`) as it takes a long time to download and process. You can start directly with the text chunking step if you want to work with the Godot documentation.
+- 支持语义搜索 Godot 官方文档
+- 提供 RESTful API 接口
+- 支持多种集成方式
+- 可配置的查询参数
+- 中文支持
 
-![Visualization Screenshot](assets/visualization_screenshot.png)
+## 安装说明
 
-## Installation
+### 1. 环境要求
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/zivshek/web2embeddings.git
-   cd web2embedding
-   ```
+- Python 3.9+
+- Conda 环境管理工具
+- Git
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Getting Started
-
-The repository includes pre-curated Godot documentation, so you can quickly try out the pipeline:
-
-### Quick Start with Existing Data
-
-1. Generate text chunks from the curated Godot documentation:
-   ```bash
-   python chunker.py --input artifacts/curated/godotengine --chunk-size 400 --chunk-overlap 20
-   ```
-
-2. Create vector embeddings:
-   ```bash
-   python vectorizer.py --input artifacts/chunks/godotengine_chunks_SZ_400_O_20.jsonl
-   ```
-   it will log the collection name to artifacts/collections.txt, so you can copy it for other uses later.
-
-3. Visualize the embeddings:
-   ```bash
-   python visualizer.py --collection godotengine_chunks_SZ_400_O_20_sentence-transformers_all-MiniLM-L6-v2
-   ```
-
-### Full Pipeline with New Content
-
-To process new web content from scratch:
-
-1. Add URLs to `websites_to_download.txt`, then download the content:
-   ```bash
-   python downloader.py
-   ```
-
-2. Follow steps 2-5 in the Workflow section below.
-
-## Overview
-
-This project provides a comprehensive workflow for:
-
-1. Downloading web content (such as Godot documentation)
-2. Curating the content by cleaning and converting to markdown
-3. Chunking the text into manageable segments
-4. Creating vector embeddings of the text chunks
-5. Visualizing the embeddings in 2D/3D space
-
-## Prerequisites
-
-- Python 3.8+
-- Required Python packages (installed via requirements.txt)
-- Sufficient disk space for downloaded content and vector database
-
-## Project Structure
-
-```
-website2embedding/
-├── downloader.py       # Downloads web content
-├── page_curator.py     # Cleans HTML and converts to markdown
-├── chunker.py          # Splits text into chunks
-├── vectorizer.py       # Creates vector embeddings
-├── visualizer.py       # Visualizes embeddings in 2D/3D
-├── websites_to_download.txt  # List of websites to download
-├── artifacts/         # Directory for all generated files
-    ├── downloaded_sites/  # Raw downloaded HTML
-    ├── curated/         # Cleaned markdown files
-    ├── chunks/          # Text chunks in JSONL format
-    ├── chroma_db/       # Vector database
-    └── visualizations/  # 2D/3D visualizations
-```
-
-## Workflow
-
-### 1. Download Web Content
-
-Downloads HTML content from websites listed in `websites_to_download.txt`:
+### 2. 安装步骤
 
 ```bash
-python downloader.py --delay 1.0
+# 克隆仓库
+git clone https://github.com/yourusername/godot-docs-mcp.git
+cd godot-docs-mcp
+
+# 创建并激活 Conda 环境
+conda create -n web2embeddings python=3.9
+conda activate web2embeddings
+
+# 安装依赖
+pip install -r requirements.txt
 ```
 
-Options:
-- `--delay` / `-d`: Delay between requests in seconds (default: 1.0)
+## 使用方法
 
-### 2. Curate Content
-
-Clean HTML and convert to markdown format:
+### 1. 作为独立服务运行
 
 ```bash
-python curator.py --input artifacts/downloaded_sites/site_domain
+# 启动服务
+python mcp_interface.py
+
+# 测试查询
+curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d '{"query": "如何在 Godot 中创建一个 2D 游戏？"}'
 ```
 
-Options:
-- `--input` / `-i`: Input directory with downloaded HTML
+### 2. 集成到 Cursor
 
-### 3. Create Text Chunks
+1. 复制配置文件：
+```bash
+mkdir -p ~/.cursor
+cp .cursor/mcp_config.json ~/.cursor/
+```
 
-Split markdown files into manageable chunks:
+2. 在 Cursor 设置中添加 MCP 配置：
+```json
+{
+    "mcp_name": "godot_docs",
+    "description": "Godot 文档检索系统",
+    "command": "python",
+    "args": ["/path/to/godot-docs-mcp/cursor_mcp.py"],
+    "working_directory": "/path/to/godot-docs-mcp",
+    "env": {
+        "PYTHONPATH": "/path/to/godot-docs-mcp",
+        "CONDA_ENV": "web2embeddings"
+    }
+}
+```
+
+### 3. 集成到其他支持 MCP 的软件
+
+#### 3.1 通过命令行接口
 
 ```bash
-python chunker.py --input artifacts/curated/site_domain --chunk-size 400 --chunk-overlap 20
+# 直接查询
+echo "您的查询" | python cursor_mcp.py
+
+# 或者
+python mcp_interface.py -q "您的查询"
 ```
 
-Options:
-- `--input` / `-i`: Input directory with markdown files
-- `--chunk-size` / `-s`: Maximum size of chunks in characters (default: 400)
-- `--chunk-overlap` / `-v`: Overlap between chunks in characters (default: 20)
+#### 3.2 通过 Python API
 
-### 4. Create Vector Embeddings
+```python
+from mcp_interface import get_godot_context
 
-Generate embeddings and store in ChromaDB:
+# 执行查询
+results = get_godot_context("您的查询")
+for result in results:
+    print(f"相关度: {result['relevance']:.2f}")
+    print(f"内容: {result['document'][:200]}...")
+```
 
+## 配置说明
+
+### 1. 数据库配置
+
+默认数据库路径：`artifacts/vector_stores/chroma_db`
+
+如需修改，请编辑 `mcp_interface.py` 中的 `db_path` 参数。
+
+### 2. 查询参数
+
+- `n_results`: 返回结果数量（默认：20）
+- `collection_name`: ChromaDB 集合名称
+
+## 项目结构
+
+```
+godot-docs-mcp/
+├── .cursor/                    # Cursor 配置文件
+│   ├── mcp_config.json        # MCP 配置
+│   └── activate_mcp.bat       # 环境激活脚本
+├── artifacts/                  # 数据文件
+│   ├── curated/               # 清理后的文档
+│   └── vector_stores/         # 向量数据库
+├── mcp_interface.py           # 主程序
+├── cursor_mcp.py              # Cursor 集成
+├── requirements.txt           # 依赖列表
+└── README.md                  # 说明文档
+```
+
+## 常见问题
+
+### 1. 环境问题
+
+如果遇到环境激活失败：
 ```bash
-python vectorizer.py --input artifacts/chunks/chunks_SZ_400_O_20.jsonl --db artifacts/vector_stores/chroma_db
+# 检查 Conda 环境
+conda env list
+
+# 重新创建环境
+conda create -n web2embeddings python=3.9
+conda activate web2embeddings
+pip install -r requirements.txt
 ```
 
-Options:
-- `--input` / `-i`: Input JSONL file containing text chunks
-- `--db` / `-d`: Directory for ChromaDB vector database (default: artifacts/vector_stores/chroma_db)
-- `--model` / `-m`: Name of the sentence-transformer model (default: sentence-transformers/all-MiniLM-L6-v2)
-- `--batch-size` / `-b`: Batch size for embedding generation (default: 32)
+### 2. 查询问题
 
-> **Note:** The **collection** name will be logged to artifacts/vector_stores/collections.txt for later usages.
+如果查询无结果：
+- 检查数据库路径是否正确
+- 确认集合名称是否正确
+- 验证文档是否已正确导入
 
-### 5. Visualize Embeddings
+### 3. 性能优化
 
-Create interactive 2D/3D visualizations of embeddings:
+- 减少返回结果数量
+- 优化查询语句
+- 使用更高效的模型
 
-```bash
-python visualizer.py --collection chunks_SZ_400_O_20_sentence-transformers_all-MiniLM-L6-v2
-```
+## 贡献指南
 
-Options:
-- `--db` / `-d`: ChromaDB database directory (default: artifacts/vector_stores/chroma_db)
-- `--collection` / `-c`: Name of the collection in ChromaDB
-- `--max-points` / `-m`: Maximum points to visualize (default: 2000)
-- `--seed` / `-s`: Random seed for reproducibility (default: 42)
-- `--clusters` / `-k`: Number of clusters for coloring (default: 10)
+1. Fork 项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
 
-## Example Use Case
+## 许可证
 
-This project was designed to process Godot documentation, but can be adapted for any web content. Potential applications include:
-- Technical documentation exploration
-- Semantic search engines
-- Content organization and discovery
-- Document similarity analysis
+MIT License
 
-## Notes
+## 联系方式
 
-- The `.gitignore` is set up to exclude the artifacts directory to avoid committing large files.
-- For large websites, consider adjusting the delay in `downloader.py` to avoid rate limiting.
-- Vector embeddings require significant memory for large collections.
+- 项目主页：https://github.com/yourusername/godot-docs-mcp
+- 问题反馈：https://github.com/yourusername/godot-docs-mcp/issues

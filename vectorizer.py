@@ -12,7 +12,7 @@ from datetime import datetime
 # "dunzhang/stella_en_400M_v5"
 
 class ChunkVectorizer:
-    """Generate embeddings from text chunks and store them in a ChromaDB vector database."""
+    """从文本块生成嵌入向量并存储在ChromaDB向量数据库中。"""
     
     def __init__(
         self,
@@ -21,148 +21,161 @@ class ChunkVectorizer:
         model_name: str,
         batch_size: int = 32
     ):
-        """Initialize the vectorizer with input path and model parameters.
-        
+        """
+        初始化向量化器
         Args:
-            input_file: Path to the input JSONL file containing text chunks
-            db_directory: Directory where ChromaDB will store the vector database
-            model_name: The name of the sentence-transformer model to use
-            batch_size: Batch size for embedding generation
+            input_file: 包含文本块的输入JSONL文件路径
+            db_directory: ChromaDB存储向量数据库的目录
+            model_name: 要使用的sentence-transformer模型名称
+            batch_size: 生成嵌入向量的批处理大小
         """
         self.input_file = input_file
         self.db_directory = db_directory
         collection_base_name = os.path.basename(input_file).replace('.jsonl', '')
         
-        # Create collection name and limit to 63 characters (database limitation)
-        # Extract model name short version (e.g., "all-MiniLM-L6-v2" from full path)
+        # 创建集合名称并限制为63个字符（数据库限制）
+        # 提取模型名称的简短版本（例如，从完整路径中提取"all-MiniLM-L6-v2"）
         model_short_name = model_name.split('/')[-1] if '/' in model_name else model_name
         collection_name = f"{collection_base_name}_{model_short_name}"
         
-        # Truncate if longer than 63 chars
+        # 如果超过63个字符则截断
         if len(collection_name) > 63:
             collection_name = collection_name[:63]
         
         self.collection_name = collection_name
-        print(f"Collection name: {self.collection_name} ({len(self.collection_name)} chars)")
+        print(f"集合名称: {self.collection_name} ({len(self.collection_name)} 个字符)")
         
-        # Initialize the ChromaDB client
-        print(f"Initializing ChromaDB at {db_directory}")
+        # 初始化ChromaDB客户端
+        print(f"在 {db_directory} 初始化ChromaDB")
         self.client = chromadb.PersistentClient(path=db_directory)
         
-        # Delete the collection if it exists
+        # 如果集合已存在则删除
         try:
             self.client.delete_collection(name=self.collection_name)
-            print(f"Deleted existing collection: {self.collection_name}")
+            print(f"已删除现有集合: {self.collection_name}")
         except Exception as e:
-            print(f"No existing collection to delete: {e}")
+            print(f"没有现有集合可删除: {e}")
         
-        # Create embedding function using the sentence transformer
+        # 使用sentence transformer创建嵌入函数
         self.embedding_function = CustomEmbeddingFunction(model_name)
         
-        # Create a new collection
+        # 创建新集合
         self.collection = self.client.create_collection(
             name=self.collection_name,
             embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"}  # Using cosine similarity for semantic search
+            metadata={"hnsw:space": "cosine"}  # 使用余弦相似度进行语义搜索
         )
-        print(f"Created new collection: {self.collection_name}")
+        print(f"已创建新集合: {self.collection_name}")
         
-        # Append the collection name to artifacts/collections.txt
+        # 将集合名称追加到artifacts/collections.txt
         collections_file = "artifacts/vector_stores/collections.txt"
         os.makedirs(os.path.dirname(collections_file), exist_ok=True)
         with open(collections_file, 'a+', encoding='utf-8') as f:
-            f.seek(0)  # Move to the beginning of the file
+            f.seek(0)  # 移动到文件开头
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"{self.collection_name} ({timestamp}) - Original model: {model_name}\n")
+            f.write(f"{self.collection_name} ({timestamp}) - 原始模型: {model_name}\n")
         self.batch_size = batch_size
         
-        # Load the embedding model
-        print(f"Using model: {model_name}")
+        # 加载嵌入模型
+        print(f"使用模型: {model_name}")
         self.model = SentenceTransformer(model_name)
-        print(f"Model loaded: {model_name} (embedding dimension: {self.model.get_sentence_embedding_dimension()})")
+        print(f"模型已加载: {model_name} (嵌入维度: {self.model.get_sentence_embedding_dimension()})")
         
     def load_chunks(self) -> List[Dict[str, Any]]:
-        """Load chunks from the input JSONL file."""
+        """
+        从输入JSONL文件加载文本块
+        Returns:
+            文本块列表
+        """
         chunks = []
         
-        print(f"Loading chunks from {self.input_file}")
+        print(f"从 {self.input_file} 加载文本块")
         with open(self.input_file, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip():
                     chunk = json.loads(line)
                     chunks.append(chunk)
         
-        print(f"Loaded {len(chunks)} chunks")
+        print(f"已加载 {len(chunks)} 个文本块")
         return chunks
     
     def process_and_store_chunks(self, chunks: List[Dict[str, Any]]) -> None:
-        """Process chunks in batches and store them in ChromaDB."""
-        # Extract data for ChromaDB
+        """
+        批量处理文本块并将它们存储在ChromaDB中
+        Args:
+            chunks: 要处理的文本块列表
+        """
+        # 提取ChromaDB所需的数据
         chunk_ids = [chunk['id'] for chunk in chunks]
         texts = [chunk['text'] for chunk in chunks]
         metadatas = [{'source': chunk['source']} for chunk in chunks]
         
-        print(f"Processing {len(chunks)} chunks in batches of {self.batch_size}")
+        print(f"以 {self.batch_size} 为批次处理 {len(chunks)} 个文本块")
         
-        # Process and add in batches
+        # 分批处理和添加
         for i in tqdm(range(0, len(chunks), self.batch_size)):
             batch_ids = chunk_ids[i:i+self.batch_size]
             batch_texts = texts[i:i+self.batch_size]
             batch_metadatas = metadatas[i:i+self.batch_size]
             
-            # Embeddings are computed automatically by ChromaDB when using the add method
+            # 使用add方法时，ChromaDB会自动计算嵌入向量
             self.collection.add(
                 ids=batch_ids,
                 documents=batch_texts,
                 metadatas=batch_metadatas
             )
         
-        print(f"Successfully stored {len(chunks)} chunks in ChromaDB")
+        print(f"已成功将 {len(chunks)} 个文本块存储到ChromaDB")
         
-        # Get collection stats
+        # 获取集合统计信息
         collection_count = self.collection.count()
-        print(f"Total documents in collection: {collection_count}")
+        print(f"集合中的文档总数: {collection_count}")
         
     def run(self) -> None:
-        """Run the full vectorization process."""
+        """运行完整的向量化处理流程"""
         chunks = self.load_chunks()
         self.process_and_store_chunks(chunks)
-        print(f"Vector database created successfully at: {os.path.abspath(self.db_directory)}")
-        print("You can now query the database using ChromaDB's query API.")
+        print(f"向量数据库已成功创建于: {os.path.abspath(self.db_directory)}")
+        print("现在可以使用ChromaDB的查询API查询数据库。")
 
 
 class CustomEmbeddingFunction:
-    """Custom embedding function for ChromaDB using sentence-transformers."""
+    """使用sentence-transformers的ChromaDB自定义嵌入函数。"""
     
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        """Initialize with a specific model."""
+        """
+        使用特定模型初始化
+        Args:
+            model_name: 要使用的模型名称
+        """
         self.model = SentenceTransformer(model_name)
         
     def __call__(self, input: List[str]) -> List[List[float]]:
-        """Generate embeddings for a list of texts.
-        
+        """
+        为文本列表生成嵌入向量
         Args:
-            input: List of texts to embed (parameter name must be 'input' for ChromaDB)
-            
+            input: 要嵌入的文本列表（参数名必须为'input'以符合ChromaDB要求）
         Returns:
-            List of embeddings as float lists
+            浮点数列表形式的嵌入向量列表
         """
         embeddings = self.model.encode(input)
         return embeddings.tolist()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate embeddings from text chunks and store them in ChromaDB.")
-    parser.add_argument("--input", "-i", help="Input JSONL file containing text chunks")
+    # 创建命令行参数解析器
+    parser = argparse.ArgumentParser(description="从文本块生成嵌入向量并存储在ChromaDB中。")
+    parser.add_argument("--input", "-i", help="包含文本块的输入JSONL文件")
     parser.add_argument("--db", "-d", default="artifacts/vector_stores/chroma_db",
-                        help="Directory where ChromaDB will store the vector database (default: artifacts/vector_stores/chroma_db)")
+                        help="ChromaDB存储向量数据库的目录（默认：artifacts/vector_stores/chroma_db）")
     parser.add_argument("--model", "-m", default="sentence-transformers/all-MiniLM-L6-v2", 
-                        help="Name of the sentence-transformer model to use (default: sentence-transformers/all-MiniLM-L6-v2)")
+                        help="要使用的sentence-transformer模型名称（默认：sentence-transformers/all-MiniLM-L6-v2）")
     parser.add_argument("--batch-size", "-b", type=int, default=32,
-                        help="Batch size for embedding generation (default: 32)")
+                        help="生成嵌入向量的批处理大小（默认：32）")
     
     args = parser.parse_args()
     
+    # 创建向量化器实例并运行
     vectorizer = ChunkVectorizer(
         input_file=args.input,
         db_directory=args.db,
