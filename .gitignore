@@ -48,3 +48,6 @@ artifacts/visualizations
 artifacts/chunks
 artifacts/vector_stores
 artifacts/curated
+
+# 向量数据库（可选，取决于是否需要包含预训练数据）
+# artifacts/vector_stores/

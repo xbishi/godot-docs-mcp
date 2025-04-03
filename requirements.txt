@@ -1,11 +1,28 @@
+# 核心依赖
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+numpy>=1.20.0
+argparse>=1.4.0
+
+# MCP 相关
+mcp[cli]>=1.6.0
+httpx>=0.24.0
+httpx-sse>=0.4.0
+
+# 文档处理
 beautifulsoup4>=4.9.0
 requests>=2.25.0
 html2text>=2020.1.16
 langchain>=0.0.200
-chromadb>=0.4.0
-sentence-transformers>=2.2.0
-numpy>=1.20.0
+
+# 数据处理和可视化
 plotly>=5.5.0
 umap-learn>=0.5.0
 scikit-learn>=1.0.0
 tqdm>=4.60.0
+
+# 开发工具
+pytest>=7.0.0
+black>=22.0.0
+isort>=5.10.0
+flake8>=4.0.0
