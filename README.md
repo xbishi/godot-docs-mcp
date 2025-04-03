@@ -32,7 +32,7 @@
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/[your-username]/godot-docs-search.git
+git clone https://github.com/bishi/godot-docs-search.git
 cd godot-docs-search
 ```
 
@@ -159,7 +159,7 @@ python mcp_server.py -d artifacts/vector_stores/chroma_db -c godotengine_chunks_
 
 MIT License
 
-Copyright (c) 2024 [Your Name]
+Copyright (c) 2024 bishi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
