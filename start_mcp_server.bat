@@ -1,16 +1,16 @@
 @echo off
-cd /d %~dp0
+cd /d "%~dp0"
 
 :: 检查虚拟环境是否存在
 if not exist ".venv" (
     echo 正在创建虚拟环境...
     python -m venv .venv
     echo 正在安装依赖...
-    call .venv\Scripts\activate
+    call ".venv\Scripts\activate.bat"
     pip install -r requirements.txt
 ) else (
     echo 正在激活虚拟环境...
-    call .venv\Scripts\activate
+    call ".venv\Scripts\activate.bat"
 )
 
 :: 设置环境变量
